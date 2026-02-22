@@ -1,0 +1,12 @@
+{
+  "name": "prometheus-dashboard",
+  "version": "3.0.0",
+  "description": "Prometheus Dashboard voor MIKKIE WORLD",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "redis": "^4.6.0"
+  }
+}

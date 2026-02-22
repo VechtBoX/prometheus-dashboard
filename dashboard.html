@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔥 Prometheus Dashboard — MIKKIE WORLD</title>
+  <style>
+    /* ============================================================
+       PROMETHEUS DASHBOARD — Dark Terminal Aesthetic
+       Kleurenpalet: Donker groen/amber op zwart, matrix-stijl
+    ============================================================ */
+    :root {
+      --bg: #0a0a0a;
+      --bg2: #111111;
+      --bg3: #1a1a1a;
+      --border: #2a2a2a;
+      --groen: #00ff88;
+      --amber: #ffb800;
+      --blauw: #00aaff;
+      --rood: #ff4444;
+      --paars: #aa44ff;
+      --cyaan: #00ffdd;
+      --tekst: #e0e0e0;
+      --tekst-dim: #666;
+      --font: 'Courier New', Courier, monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--tekst);
+      font-family: var(--font);
+      font-size: 13px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    .header {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--groen);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-links {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-logo {
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--groen);
+      text-shadow: 0 0 10px var(--groen);
+      letter-spacing: 2px;
+    }
+
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--groen);
+      box-shadow: 0 0 6px var(--groen);
+      animation: puls 2s infinite;
+    }
+
+    .status-dot.offline { background: var(--rood); box-shadow: 0 0 6px var(--rood); animation: none; }
+
+    @keyframes puls {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .header-tijd {
+      color: var(--amber);
+      font-size: 11px;
+    }
+
+    /* Navigatie tabs */
+    .nav-tabs {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      display: flex;
+      gap: 4px;
+    }
+
+    .nav-tab {
+      padding: 8px 16px;
+      cursor: pointer;
+      color: var(--tekst-dim);
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      font-family: var(--font);
+      font-size: 12px;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      letter-spacing: 1px;
+    }
+
+    .nav-tab:hover { color: var(--tekst); }
+    .nav-tab.actief { color: var(--groen); border-bottom-color: var(--groen); }
+
+    /* Hoofdlayout */
+    .container {
+      padding: 16px 20px;
+      max-width: 1800px;
+      margin: 0 auto;
+    }
+
+    /* Statistieken balk */
+    .stats-balk {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-kaart {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 12px 16px;
+      text-align: center;
+      transition: border-color 0.3s;
+    }
+
+    .stat-kaart:hover { border-color: var(--groen); }
+
+    .stat-waarde {
+      font-size: 22px;
+      font-weight: bold;
+      color: var(--groen);
+      text-shadow: 0 0 8px var(--groen);
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: var(--tekst-dim);
+      margin-top: 4px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Grid layout */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 1200px) {
+      .grid-3 { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    /* Panelen */
+    .paneel {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .paneel-header {
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .paneel-titel {
+      color: var(--groen);
+      font-weight: bold;
+    }
+
+    .paneel-badge {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 2px 6px;
+      font-size: 10px;
+      color: var(--tekst-dim);
+    }
+
+    .paneel-inhoud {
+      padding: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .paneel-inhoud::-webkit-scrollbar { width: 4px; }
+    .paneel-inhoud::-webkit-scrollbar-track { background: var(--bg); }
+    .paneel-inhoud::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* Agent kaarten */
+    .agents-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+      padding: 12px;
+    }
+
+    .agent-kaart {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s;
+    }
+
+    .agent-kaart.online { border-color: #00ff8844; }
+    .agent-kaart.offline { border-color: #ff444433; opacity: 0.6; }
+    .agent-kaart.actief { border-color: var(--groen); box-shadow: 0 0 8px #00ff8822; }
+
+    .agent-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .agent-indicator.online { background: var(--groen); box-shadow: 0 0 4px var(--groen); animation: puls 2s infinite; }
+    .agent-indicator.offline { background: var(--rood); }
+
+    .agent-info { flex: 1; min-width: 0; }
+    .agent-naam { font-size: 12px; font-weight: bold; color: var(--tekst); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .agent-machine { font-size: 10px; color: var(--tekst-dim); }
+    .agent-tijd { font-size: 10px; color: var(--tekst-dim); text-align: right; }
+
+    /* Live Activiteiten */
+    .activiteiten-lijst {
+      padding: 8px 12px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .activiteiten-lijst::-webkit-scrollbar { width: 4px; }
+    .activiteiten-lijst::-webkit-scrollbar-track { background: var(--bg); }
+    .activiteiten-lijst::-webkit-scrollbar-thumb { background: var(--border); }
+
+    .activiteit {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px solid #1a1a1a;
+      animation: inschuiven 0.3s ease-out;
+    }
+
+    @keyframes inschuiven {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .activiteit:last-child { border-bottom: none; }
+
+    .act-tijd {
+      font-size: 10px;
+      color: var(--tekst-dim);
+      white-space: nowrap;
+      min-width: 60px;
+    }
+
+    .act-agent {
+      font-size: 11px;
+      font-weight: bold;
+      white-space: nowrap;
+      min-width: 90px;
+    }
+
+    .act-bericht {
+      font-size: 11px;
+      color: var(--tekst);
+      flex: 1;
+      line-height: 1.4;
+    }
+
+    .act-type-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+
+    /* Type kleuren */
+    .type-success { color: var(--groen); }
+    .type-error { color: var(--rood); }
+    .type-warning { color: var(--amber); }
+    .type-info { color: var(--blauw); }
+    .type-brainstorm { color: var(--paars); }
+    .type-social { color: #ff6b9d; }
+    .type-crypto { color: var(--cyaan); }
+
+    .dot-success { background: var(--groen); }
+    .dot-error { background: var(--rood); }
+    .dot-warning { background: var(--amber); }
+    .dot-info { background: var(--blauw); }
+    .dot-brainstorm { background: var(--paars); }
+    .dot-social { background: #ff6b9d; }
+    .dot-crypto { background: var(--cyaan); }
+
+    /* Filter knoppen */
+    .filter-balk {
+      display: flex;
+      gap: 6px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .filter-knop {
+      padding: 3px 10px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--tekst-dim);
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: 10px;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+    }
+
+    .filter-knop:hover { border-color: var(--groen); color: var(--tekst); }
+    .filter-knop.actief { background: var(--bg3); border-color: var(--groen); color: var(--groen); }
+
+    /* Crypto nieuws */
+    .nieuws-item {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nieuws-item:last-child { border-bottom: none; }
+
+    .nieuws-titel {
+      font-size: 12px;
+      color: var(--tekst);
+      margin-bottom: 3px;
+      line-height: 1.4;
+    }
+
+    .nieuws-meta {
+      font-size: 10px;
+      color: var(--tekst-dim);
+    }
+
+    /* XRP prijs */
+    .xrp-prijs {
+      font-size: 32px;
+      font-weight: bold;
+      color: var(--cyaan);
+      text-shadow: 0 0 12px var(--cyaan);
+      text-align: center;
+      padding: 16px;
+    }
+
+    .xrp-label {
+      text-align: center;
+      font-size: 11px;
+      color: var(--tekst-dim);
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    /* Brainstorm content */
+    .brainstorm-item {
+      background: var(--bg);
+      border-left: 3px solid var(--paars);
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      border-radius: 0 4px 4px 0;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    /* Missie content */
+    .missie-item {
+      background: var(--bg);
+      border-left: 3px solid var(--groen);
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      border-radius: 0 4px 4px 0;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    /* Viral content */
+    .viral-item {
+      background: var(--bg);
+      border-left: 3px solid #ff6b9d;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      border-radius: 0 4px 4px 0;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    /* Gelato omzet */
+    .omzet-display {
+      text-align: center;
+      padding: 16px;
+    }
+
+    .omzet-bedrag {
+      font-size: 28px;
+      font-weight: bold;
+      color: var(--amber);
+      text-shadow: 0 0 10px var(--amber);
+    }
+
+    /* Verbinding indicator */
+    .verbinding-balk {
+      background: var(--bg3);
+      border-top: 1px solid var(--border);
+      padding: 6px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 10px;
+      color: var(--tekst-dim);
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+    }
+
+    .verbinding-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Tabblad inhoud */
+    .tab-inhoud { display: none; }
+    .tab-inhoud.actief { display: block; }
+
+    /* Lege staat */
+    .leeg {
+      text-align: center;
+      padding: 24px;
+      color: var(--tekst-dim);
+      font-size: 12px;
+    }
+
+    /* Tekst helpers */
+    .tekst-groen { color: var(--groen); }
+    .tekst-amber { color: var(--amber); }
+    .tekst-rood { color: var(--rood); }
+    .tekst-blauw { color: var(--blauw); }
+    .tekst-dim { color: var(--tekst-dim); }
+
+    /* Scrollbaar groot paneel */
+    .groot-paneel .paneel-inhoud { max-height: 600px; }
+
+    /* Knipperende cursor */
+    .cursor::after {
+      content: '_';
+      animation: knipperen 1s infinite;
+    }
+
+    @keyframes knipperen {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* Machine labels */
+    .machine-macbook { color: var(--blauw); }
+    .machine-imac { color: var(--groen); }
+
+    /* Scrollmargin voor vaste footer */
+    .container { padding-bottom: 40px; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-links">
+    <div class="header-logo">⚡ PROMETHEUS</div>
+    <div style="font-size:11px; color: var(--tekst-dim);">MIKKIE WORLD — Multi-Agent Systeem</div>
+  </div>
+  <div class="header-status">
+    <div class="verbinding-item">
+      <div class="status-dot" id="redis-dot"></div>
+      <span id="redis-status">Redis verbinden...</span>
+    </div>
+    <div class="verbinding-item">
+      <div class="status-dot" id="sse-dot" style="background: var(--amber); box-shadow: 0 0 6px var(--amber);"></div>
+      <span id="sse-status">SSE verbinden...</span>
+    </div>
+    <div class="header-tijd" id="klok"></div>
+  </div>
+</div>
+
+<!-- Navigatie tabs -->
+<div class="nav-tabs">
+  <button class="nav-tab actief" onclick="toonTab('overzicht', this)">📊 OVERZICHT</button>
+  <button class="nav-tab" onclick="toonTab('agents', this)">🤖 AGENTS</button>
+  <button class="nav-tab" onclick="toonTab('activiteiten', this)">⚡ LIVE ACTIVITEITEN</button>
+  <button class="nav-tab" onclick="toonTab('content', this)">✨ AI CONTENT</button>
+  <button class="nav-tab" onclick="toonTab('crypto', this)">💎 CRYPTO</button>
+</div>
+
+<!-- Hoofdcontainer -->
+<div class="container">
+
+  <!-- =================== TAB: OVERZICHT =================== -->
+  <div class="tab-inhoud actief" id="tab-overzicht">
+
+    <!-- Statistieken balk -->
+    <div class="stats-balk">
+      <div class="stat-kaart">
+        <div class="stat-waarde tekst-groen" id="stat-agents-online">—</div>
+        <div class="stat-label">Agents Online</div>
+      </div>
+      <div class="stat-kaart">
+        <div class="stat-waarde tekst-cyaan" id="stat-xrp">—</div>
+        <div class="stat-label">XRP Prijs (€)</div>
+      </div>
+      <div class="stat-kaart">
+        <div class="stat-waarde tekst-amber" id="stat-gelato">—</div>
+        <div class="stat-label">Gelato Omzet</div>
+      </div>
+      <div class="stat-kaart">
+        <div class="stat-waarde" id="stat-activiteiten">0</div>
+        <div class="stat-label">Activiteiten</div>
+      </div>
+      <div class="stat-kaart">
+        <div class="stat-waarde tekst-groen" id="stat-macbook">—</div>
+        <div class="stat-label">MacBook Pro</div>
+      </div>
+      <div class="stat-kaart">
+        <div class="stat-waarde tekst-groen" id="stat-imac">—</div>
+        <div class="stat-label">iMac</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Live Agents compact -->
+      <div class="paneel">
+        <div class="paneel-header">
+          <span class="paneel-titel">🤖 LIVE AGENTS</span>
+          <span class="paneel-badge" id="agents-teller">laden...</span>
+        </div>
+        <div class="agents-grid" id="agents-overzicht-grid">
+          <div class="leeg">Agents laden...</div>
+        </div>
+      </div>
+
+      <!-- Recente activiteiten compact -->
+      <div class="paneel">
+        <div class="paneel-header">
+          <span class="paneel-titel">⚡ RECENTE ACTIVITEITEN</span>
+          <span class="paneel-badge" id="act-teller-overzicht">0</span>
+        </div>
+        <div class="activiteiten-lijst" id="activiteiten-overzicht" style="max-height:350px;">
+          <div class="leeg">Wachten op activiteiten...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <!-- Laatste missie -->
+      <div class="paneel">
+        <div class="paneel-header">
+          <span class="paneel-titel">✨ LAATSTE MISSIE</span>
+          <span class="paneel-badge">CREATOR</span>
+        </div>
+        <div class="paneel-inhoud" id="missie-overzicht">
+          <div class="leeg">Missie laden...</div>
+        </div>
+      </div>
+
+      <!-- Brainstorm -->
+      <div class="paneel">
+        <div class="paneel-header">
+          <span class="paneel-titel">🧠 BRAINSTORM</span>
+          <span class="paneel-badge">SPARK</span>
+        </div>
+        <div class="paneel-inhoud" id="brainstorm-overzicht">
+          <div class="leeg">Brainstorm laden...</div>
+        </div>
+      </div>
+
+      <!-- Viral content -->
+      <div class="paneel">
+        <div class="paneel-header">
+          <span class="paneel-titel">🔥 VIRAL CONTENT</span>
+          <span class="paneel-badge">VIRAL</span>
+        </div>
+        <div class="paneel-inhoud" id="viral-overzicht">
+          <div class="leeg">Content laden...</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- =================== TAB: AGENTS =================== -->
+  <div class="tab-inhoud" id="tab-agents">
+    <div class="grid-2">
+      <!-- MacBook Pro agents -->
+      <div class="paneel">
+        <div class="paneel-header">
+          <span class="paneel-titel">💻 MACBOOK PRO AGENTS</span>
+          <span class="paneel-badge machine-macbook">192.168.1.195</span>
+        </div>
+        <div class="agents-grid" id="macbook-agents-grid">
+          <div class="leeg">Laden...</div>
+        </div>
+      </div>
+
+      <!-- iMac agents -->
+      <div class="paneel">
+        <div class="paneel-header">
+          <span class="paneel-titel">🖥️ iMAC AGENTS</span>
+          <span class="paneel-badge machine-imac">iMac</span>
+        </div>
+        <div class="agents-grid" id="imac-agents-grid">
+          <div class="leeg">Laden...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Agent detail tabel -->
+    <div class="paneel">
+      <div class="paneel-header">
+        <span class="paneel-titel">📋 AGENT STATUS DETAIL</span>
+        <span class="paneel-badge" id="agents-detail-teller">—</span>
+      </div>
+      <div class="paneel-inhoud" style="max-height:500px;">
+        <table style="width:100%; border-collapse:collapse; font-size:11px;" id="agents-tabel">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border); color: var(--tekst-dim);">
+              <th style="text-align:left; padding:6px 8px;">Agent</th>
+              <th style="text-align:left; padding:6px 8px;">Machine</th>
+              <th style="text-align:left; padding:6px 8px;">Beschrijving</th>
+              <th style="text-align:left; padding:6px 8px;">Status</th>
+              <th style="text-align:left; padding:6px 8px;">Laatste Hartslag</th>
+            </tr>
+          </thead>
+          <tbody id="agents-tabel-body">
+            <tr><td colspan="5" class="leeg">Laden...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== TAB: LIVE ACTIVITEITEN =================== -->
+  <div class="tab-inhoud" id="tab-activiteiten">
+    <div class="paneel groot-paneel">
+      <div class="paneel-header">
+        <span class="paneel-titel">⚡ LIVE ACTIVITEITEN FEED</span>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <span class="paneel-badge" id="act-teller-live">0</span>
+          <button class="filter-knop" onclick="clearActiviteiten()" style="color: var(--rood); border-color: var(--rood);">✕ WISSEN</button>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-balk">
+        <span style="color: var(--tekst-dim); font-size:10px; letter-spacing:1px;">FILTER:</span>
+        <button class="filter-knop actief" onclick="setFilter('alle', this)">ALLE</button>
+        <button class="filter-knop" onclick="setFilter('success', this)">✓ SUCCESS</button>
+        <button class="filter-knop" onclick="setFilter('error', this)">✕ ERROR</button>
+        <button class="filter-knop" onclick="setFilter('warning', this)">⚠ WARNING</button>
+        <button class="filter-knop" onclick="setFilter('brainstorm', this)">🧠 BRAINSTORM</button>
+        <button class="filter-knop" onclick="setFilter('social', this)">📱 SOCIAL</button>
+        <button class="filter-knop" onclick="setFilter('crypto', this)">💎 CRYPTO</button>
+        <span style="margin-left:auto; color: var(--tekst-dim); font-size:10px; letter-spacing:1px;">MACHINE:</span>
+        <button class="filter-knop" onclick="setMachineFilter('alle', this)">ALLE</button>
+        <button class="filter-knop" onclick="setMachineFilter('MacBook Pro', this)">MACBOOK</button>
+        <button class="filter-knop" onclick="setMachineFilter('iMac', this)">iMAC</button>
+      </div>
+
+      <div class="activiteiten-lijst" id="activiteiten-live" style="max-height:600px;">
+        <div class="leeg cursor">Wachten op activiteiten</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== TAB: AI CONTENT =================== -->
+  <div class="tab-inhoud" id="tab-content">
+    <div class="grid-2">
+      <!-- Missies -->
+      <div class="paneel">
+        <div class="paneel-header">
+          <span class="paneel-titel">✨ MISSIES (CREATOR)</span>
+          <span class="paneel-badge">Claude AI</span>
+        </div>
+        <div class="paneel-inhoud" id="missies-content">
+          <div class="leeg">Missies laden...</div>
+        </div>
+      </div>
+
+      <!-- Brainstorm -->
+      <div class="paneel">
+        <div class="paneel-header">
+          <span class="paneel-titel">🧠 BRAINSTORM (SPARK)</span>
+          <span class="paneel-badge">Grok AI</span>
+        </div>
+        <div class="paneel-inhoud" id="brainstorm-content">
+          <div class="leeg">Brainstorm laden...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Viral content -->
+      <div class="paneel">
+        <div class="paneel-header">
+          <span class="paneel-titel">🔥 VIRAL CONTENT (VIRAL)</span>
+          <span class="paneel-badge">Grok AI</span>
+        </div>
+        <div class="paneel-inhoud" id="viral-content">
+          <div class="leeg">Content laden...</div>
+        </div>
+      </div>
+
+      <!-- Social plan -->
+      <div class="paneel">
+        <div class="paneel-header">
+          <span class="paneel-titel">📱 SOCIAL MEDIA PLAN</span>
+          <span class="paneel-badge">VIRAL</span>
+        </div>
+        <div class="paneel-inhoud" id="social-content">
+          <div class="leeg">Social plan laden...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== TAB: CRYPTO =================== -->
+  <div class="tab-inhoud" id="tab-crypto">
+    <div class="grid-3">
+      <!-- XRP prijs -->
+      <div class="paneel">
+        <div class="paneel-header">
+          <span class="paneel-titel">💎 XRP PRIJS</span>
+          <span class="paneel-badge">Live</span>
+        </div>
+        <div class="paneel-inhoud">
+          <div class="xrp-label">XRP/EUR</div>
+          <div class="xrp-prijs" id="xrp-groot">—</div>
+          <div style="text-align:center; font-size:10px; color: var(--tekst-dim);" id="xrp-bijgewerkt">Bijgewerkt: —</div>
+        </div>
+      </div>
+
+      <!-- Gelato omzet -->
+      <div class="paneel">
+        <div class="paneel-header">
+          <span class="paneel-titel">🛍️ GELATO OMZET</span>
+          <span class="paneel-badge">E-commerce</span>
+        </div>
+        <div class="paneel-inhoud">
+          <div class="omzet-display">
+            <div style="font-size:11px; color: var(--tekst-dim); margin-bottom:8px; letter-spacing:1px;">TOTALE OMZET</div>
+            <div class="omzet-bedrag" id="gelato-omzet">€ —</div>
+            <div style="font-size:10px; color: var(--tekst-dim); margin-top:8px;" id="gelato-orders">Orders: —</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Crypto nieuws -->
+      <div class="paneel">
+        <div class="paneel-header">
+          <span class="paneel-titel">📰 CRYPTO NIEUWS</span>
+          <span class="paneel-badge">Live</span>
+        </div>
+        <div class="paneel-inhoud" id="crypto-nieuws">
+          <div class="leeg">Nieuws laden...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Vaste statusbalk onderaan -->
+<div class="verbinding-balk">
+  <div class="verbinding-item">
+    <div class="status-dot" id="footer-redis-dot"></div>
+    <span id="footer-redis">Redis: verbinden...</span>
+  </div>
+  <div class="verbinding-item">
+    <div class="status-dot" id="footer-sse-dot" style="background: var(--amber);"></div>
+    <span id="footer-sse">SSE: verbinden...</span>
+  </div>
+  <div class="verbinding-item">
+    <span id="footer-agents" style="color: var(--tekst-dim);">Agents: —</span>
+  </div>
+  <div class="verbinding-item" style="margin-left:auto;">
+    <span style="color: var(--tekst-dim);">Prometheus Dashboard v3.0 — MIKKIE WORLD</span>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// PROMETHEUS DASHBOARD — JavaScript
+// ============================================================
+
+// State
+let alleActiviteiten = [];
+let huidigFilter = 'alle';
+let huidigMachineFilter = 'alle';
+let sseVerbinding = null;
+let sseVerbonden = false;
+let herverbindPoging = 0;
+
+// Agent definities (zelfde als server)
+const AGENTS = {
+  'GUARDIAN': { machine: 'MacBook Pro', kleur: '#ef4444', emoji: '🛡️', beschrijving: 'Health Monitor' },
+  'prometheus-server': { machine: 'MacBook Pro', kleur: '#f97316', emoji: '🔥', beschrijving: 'Dashboard Server' },
+  'prometheus-agent': { machine: 'MacBook Pro', kleur: '#f59e0b', emoji: '⚡', beschrijving: 'Prometheus Agent' },
+  'mikkie-brainstorm': { machine: 'MacBook Pro', kleur: '#8b5cf6', emoji: '🧠', beschrijving: 'Brainstorm Agent' },
+  'mikkie-race': { machine: 'MacBook Pro', kleur: '#06b6d4', emoji: '🏎️', beschrijving: 'Race Agent' },
+  'live-data-agent': { machine: 'MacBook Pro', kleur: '#10b981', emoji: '📊', beschrijving: 'Live Data Agent' },
+  'race-api': { machine: 'MacBook Pro', kleur: '#3b82f6', emoji: '🚀', beschrijving: 'Race API' },
+  'xrp-monitor': { machine: 'MacBook Pro', kleur: '#6366f1', emoji: '💎', beschrijving: 'XRP Monitor' },
+  'CREATOR': { machine: 'iMac', kleur: '#22c55e', emoji: '✨', beschrijving: 'Mission Generator (Claude)' },
+  'VIRAL': { machine: 'iMac', kleur: '#f97316', emoji: '🔥', beschrijving: 'Social Media (Grok)' },
+  'SPARK': { machine: 'iMac', kleur: '#eab308', emoji: '💡', beschrijving: 'Brainstorm (Grok)' },
+  'TOKENMASTER': { machine: 'iMac', kleur: '#06b6d4', emoji: '🪙', beschrijving: 'Token Manager' },
+  'FIREBASE': { machine: 'iMac', kleur: '#f59e0b', emoji: '🔥', beschrijving: 'Firebase Agent' },
+  'imac-brainstorm': { machine: 'iMac', kleur: '#8b5cf6', emoji: '🧠', beschrijving: 'iMac Brainstorm' },
+  'imac-worker': { machine: 'iMac', kleur: '#10b981', emoji: '⚙️', beschrijving: 'iMac Worker' },
+  'Systeem': { machine: 'MacBook Pro', kleur: '#6b7280', emoji: '⚙️', beschrijving: 'Dashboard Systeem' },
+};
+
+// ---- Klok ----
+function updateKlok() {
+  const nu = new Date();
+  document.getElementById('klok').textContent = nu.toLocaleTimeString('nl-NL');
+}
+setInterval(updateKlok, 1000);
+updateKlok();
+
+// ---- Tab navigatie ----
+function toonTab(naam, knop) {
+  document.querySelectorAll('.tab-inhoud').forEach(t => t.classList.remove('actief'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('actief'));
+  document.getElementById('tab-' + naam).classList.add('actief');
+  knop.classList.add('actief');
+}
+
+// ---- SSE verbinding ----
+function verbindSSE() {
+  if (sseVerbinding) { try { sseVerbinding.close(); } catch(e) {} }
+
+  sseVerbinding = new EventSource('/events');
+
+  sseVerbinding.onopen = () => {
+    sseVerbonden = true;
+    herverbindPoging = 0;
+    zetSSEStatus(true);
+    console.log('[SSE] Verbonden');
+  };
+
+  sseVerbinding.onmessage = (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      verwerkSSEBericht(data);
+    } catch(err) {
+      console.error('[SSE] Parse fout:', err);
+    }
+  };
+
+  sseVerbinding.onerror = () => {
+    sseVerbonden = false;
+    zetSSEStatus(false);
+    herverbindPoging++;
+    const wacht = Math.min(herverbindPoging * 2000, 30000);
+    console.log(`[SSE] Fout, herverbinden in ${wacht/1000}s`);
+    setTimeout(verbindSSE, wacht);
+  };
+}
+
+function zetSSEStatus(verbonden) {
+  const dot1 = document.getElementById('sse-dot');
+  const dot2 = document.getElementById('footer-sse-dot');
+  const tekst1 = document.getElementById('sse-status');
+  const tekst2 = document.getElementById('footer-sse');
+
+  if (verbonden) {
+    [dot1, dot2].forEach(d => { if(d) { d.style.background = 'var(--groen)'; d.style.boxShadow = '0 0 6px var(--groen)'; d.classList.add('online'); } });
+    if(tekst1) tekst1.textContent = 'SSE verbonden';
+    if(tekst2) tekst2.textContent = 'SSE: verbonden';
+  } else {
+    [dot1, dot2].forEach(d => { if(d) { d.style.background = 'var(--rood)'; d.style.boxShadow = '0 0 6px var(--rood)'; d.classList.remove('online'); } });
+    if(tekst1) tekst1.textContent = 'SSE verbroken';
+    if(tekst2) tekst2.textContent = 'SSE: verbroken';
+  }
+}
+
+// ---- SSE berichten verwerken ----
+function verwerkSSEBericht(data) {
+  switch(data.type) {
+    case 'verbonden':
+      console.log('[SSE] Verbinding bevestigd:', data.tijdstip);
+      break;
+
+    case 'geschiedenis':
+      if (data.activiteiten && data.activiteiten.length > 0) {
+        alleActiviteiten = [...data.activiteiten, ...alleActiviteiten];
+        renderActiviteiten();
+      }
+      break;
+
+    case 'activiteit':
+      voegActiviteitToe(data.data);
+      break;
+
+    case 'data_update':
+      verwerkDataUpdate(data);
+      break;
+  }
+}
+
+// ---- Data update verwerken ----
+function verwerkDataUpdate(data) {
+  // Redis status
+  const redisVerbonden = data.redisVerbonden;
+  const redisDot1 = document.getElementById('redis-dot');
+  const redisDot2 = document.getElementById('footer-redis-dot');
+  const redisTekst1 = document.getElementById('redis-status');
+  const redisTekst2 = document.getElementById('footer-redis');
+
+  if (redisVerbonden) {
+    [redisDot1, redisDot2].forEach(d => { if(d) { d.style.background = 'var(--groen)'; d.style.boxShadow = '0 0 6px var(--groen)'; } });
+    if(redisTekst1) redisTekst1.textContent = 'Redis verbonden';
+    if(redisTekst2) redisTekst2.textContent = 'Redis: verbonden';
+  } else {
+    [redisDot1, redisDot2].forEach(d => { if(d) { d.style.background = 'var(--rood)'; d.style.boxShadow = '0 0 6px var(--rood)'; } });
+    if(redisTekst1) redisTekst1.textContent = 'Redis verbroken';
+    if(redisTekst2) redisTekst2.textContent = 'Redis: verbroken';
+  }
+
+  // XRP prijs
+  if (data.xrp) {
+    const prijs = typeof data.xrp === 'object' ? (data.xrp.prijs || data.xrp.price || data.xrp.eur || JSON.stringify(data.xrp)) : data.xrp;
+    const prijsGetal = parseFloat(prijs);
+    const prijsTekst = isNaN(prijsGetal) ? prijs : '€' + prijsGetal.toFixed(4);
+    const el1 = document.getElementById('stat-xrp');
+    const el2 = document.getElementById('xrp-groot');
+    if(el1) el1.textContent = prijsTekst;
+    if(el2) el2.textContent = prijsTekst;
+    const bijgewerkt = document.getElementById('xrp-bijgewerkt');
+    if(bijgewerkt) bijgewerkt.textContent = 'Bijgewerkt: ' + new Date().toLocaleTimeString('nl-NL');
+  }
+
+  // Gelato
+  if (data.gelato !== null && data.gelato !== undefined) {
+    const bedrag = typeof data.gelato === 'object' ? (data.gelato.totaal || data.gelato.omzet || 0) : data.gelato;
+    const el1 = document.getElementById('stat-gelato');
+    const el2 = document.getElementById('gelato-omzet');
+    if(el1) el1.textContent = '€' + parseFloat(bedrag).toFixed(2);
+    if(el2) el2.textContent = '€ ' + parseFloat(bedrag).toFixed(2);
+  }
+
+  // Brainstorm
+  if (data.brainstorm) {
+    renderBrainstorm(data.brainstorm);
+  }
+
+  // Missie
+  if (data.missie) {
+    renderMissie(data.missie);
+  }
+
+  // Viral
+  if (data.viral) {
+    renderViral(data.viral);
+  }
+}
+
+// ---- Activiteit toevoegen ----
+function voegActiviteitToe(act) {
+  alleActiviteiten.unshift(act);
+  if (alleActiviteiten.length > 200) alleActiviteiten.pop();
+
+  // Update tellers
+  const teller = document.getElementById('act-teller-live');
+  const tellerOvz = document.getElementById('act-teller-overzicht');
+  if(teller) teller.textContent = alleActiviteiten.length;
+  if(tellerOvz) tellerOvz.textContent = alleActiviteiten.length;
+  const statAct = document.getElementById('stat-activiteiten');
+  if(statAct) statAct.textContent = alleActiviteiten.length;
+
+  renderActiviteiten();
+  renderActiviteitenOverzicht();
+}
+
+// ---- Render activiteiten (live tab) ----
+function renderActiviteiten() {
+  const container = document.getElementById('activiteiten-live');
+  if (!container) return;
+
+  const gefilterd = alleActiviteiten.filter(a => {
+    const typeOk = huidigFilter === 'alle' || a.type === huidigFilter;
+    const machineOk = huidigMachineFilter === 'alle' || a.machine === huidigMachineFilter;
+    return typeOk && machineOk;
+  }).slice(0, 100);
+
+  if (gefilterd.length === 0) {
+    container.innerHTML = '<div class="leeg cursor">Geen activiteiten voor dit filter</div>';
+    return;
+  }
+
+  container.innerHTML = gefilterd.map(a => renderActiviteitRij(a)).join('');
+}
+
+// ---- Render activiteiten (overzicht tab) ----
+function renderActiviteitenOverzicht() {
+  const container = document.getElementById('activiteiten-overzicht');
+  if (!container) return;
+
+  const recent = alleActiviteiten.slice(0, 20);
+  if (recent.length === 0) {
+    container.innerHTML = '<div class="leeg">Wachten op activiteiten...</div>';
+    return;
+  }
+
+  container.innerHTML = recent.map(a => renderActiviteitRij(a)).join('');
+}
+
+// ---- Render één activiteit rij ----
+function renderActiviteitRij(a) {
+  const tijd = new Date(a.tijd).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const agent = AGENTS[a.agent] || {};
+  const kleur = a.kleur || agent.kleur || '#6b7280';
+  const emoji = a.emoji || agent.emoji || '🤖';
+  const type = a.type || 'info';
+
+  return `<div class="activiteit">
+    <div class="act-type-dot dot-${type}" style="background:${kleur};"></div>
+    <div class="act-tijd">${tijd}</div>
+    <div class="act-agent" style="color:${kleur};">${emoji} ${a.agent}</div>
+    <div class="act-bericht">${escapeHtml(a.bericht || '')}</div>
+  </div>`;
+}
+
+// ---- Render brainstorm ----
+function renderBrainstorm(data) {
+  const els = [document.getElementById('brainstorm-overzicht'), document.getElementById('brainstorm-content')];
+  const tekst = typeof data === 'string' ? data : (data.ideeen || data.content || data.tekst || JSON.stringify(data, null, 2));
+  const html = `<div class="brainstorm-item">${escapeHtml(tekst).replace(/\n/g, '<br>')}</div>`;
+  els.forEach(el => { if(el) el.innerHTML = html; });
+}
+
+// ---- Render missie ----
+function renderMissie(data) {
+  const els = [document.getElementById('missie-overzicht'), document.getElementById('missies-content')];
+  const tekst = typeof data === 'string' ? data : (data.missie || data.content || data.tekst || JSON.stringify(data, null, 2));
+  const html = `<div class="missie-item">${escapeHtml(tekst).replace(/\n/g, '<br>')}</div>`;
+  els.forEach(el => { if(el) el.innerHTML = html; });
+}
+
+// ---- Render viral ----
+function renderViral(data) {
+  const els = [document.getElementById('viral-overzicht'), document.getElementById('viral-content')];
+  const tekst = typeof data === 'string' ? data : (data.content || data.tekst || JSON.stringify(data, null, 2));
+  const html = `<div class="viral-item">${escapeHtml(tekst).replace(/\n/g, '<br>')}</div>`;
+  els.forEach(el => { if(el) el.innerHTML = html; });
+}
+
+// ---- Render agents ----
+function renderAgents(agentStatus) {
+  const macbookAgents = Object.entries(AGENTS).filter(([n, a]) => a.machine === 'MacBook Pro');
+  const imacAgents = Object.entries(AGENTS).filter(([n, a]) => a.machine === 'iMac');
+
+  let onlineCount = 0;
+  let macbookOnline = 0;
+  let imacOnline = 0;
+
+  function maakAgentKaart(naam, info, status) {
+    const isOnline = status ? status.online : false;
+    if (isOnline) { onlineCount++; if(info.machine === 'MacBook Pro') macbookOnline++; else imacOnline++; }
+    const secGeleden = status ? status.secGeleden : null;
+    const tijdTekst = secGeleden !== null ? (secGeleden < 60 ? `${secGeleden}s` : `${Math.floor(secGeleden/60)}m`) : '—';
+
+    return `<div class="agent-kaart ${isOnline ? 'online' : 'offline'}">
+      <div class="agent-indicator ${isOnline ? 'online' : 'offline'}"></div>
+      <div class="agent-info">
+        <div class="agent-naam">${info.emoji} ${naam}</div>
+        <div class="agent-machine">${info.beschrijving}</div>
+      </div>
+      <div class="agent-tijd">${tijdTekst}</div>
+    </div>`;
+  }
+
+  // Overzicht grid
+  const overzichtGrid = document.getElementById('agents-overzicht-grid');
+  if (overzichtGrid) {
+    overzichtGrid.innerHTML = [...macbookAgents, ...imacAgents]
+      .map(([n, a]) => maakAgentKaart(n, a, agentStatus[n]))
+      .join('');
+  }
+
+  // MacBook grid
+  const macbookGrid = document.getElementById('macbook-agents-grid');
+  if (macbookGrid) {
+    macbookGrid.innerHTML = macbookAgents.map(([n, a]) => maakAgentKaart(n, a, agentStatus[n])).join('');
+  }
+
+  // iMac grid
+  const imacGrid = document.getElementById('imac-agents-grid');
+  if (imacGrid) {
+    imacGrid.innerHTML = imacAgents.map(([n, a]) => maakAgentKaart(n, a, agentStatus[n])).join('');
+  }
+
+  // Tabel
+  const tabelBody = document.getElementById('agents-tabel-body');
+  if (tabelBody) {
+    tabelBody.innerHTML = [...macbookAgents, ...imacAgents].map(([naam, info]) => {
+      const status = agentStatus[naam];
+      const isOnline = status ? status.online : false;
+      const secGeleden = status ? status.secGeleden : null;
+      const tijdTekst = secGeleden !== null ? (secGeleden < 60 ? `${secGeleden}s geleden` : `${Math.floor(secGeleden/60)}m geleden`) : 'Geen hartslag';
+      return `<tr style="border-bottom: 1px solid var(--border);">
+        <td style="padding:6px 8px; color:${info.kleur};">${info.emoji} ${naam}</td>
+        <td style="padding:6px 8px; color: var(--tekst-dim);">${info.machine}</td>
+        <td style="padding:6px 8px; color: var(--tekst-dim);">${info.beschrijving}</td>
+        <td style="padding:6px 8px;">
+          <span style="color: ${isOnline ? 'var(--groen)' : 'var(--rood)'};">${isOnline ? '● ONLINE' : '○ OFFLINE'}</span>
+        </td>
+        <td style="padding:6px 8px; color: var(--tekst-dim);">${tijdTekst}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Statistieken bijwerken
+  const statAgents = document.getElementById('stat-agents-online');
+  const agentsTeller = document.getElementById('agents-teller');
+  const agentsDetailTeller = document.getElementById('agents-detail-teller');
+  const footerAgents = document.getElementById('footer-agents');
+  const statMacbook = document.getElementById('stat-macbook');
+  const statImac = document.getElementById('stat-imac');
+
+  const totaal = Object.keys(AGENTS).length;
+  if(statAgents) statAgents.textContent = `${onlineCount}/${totaal}`;
+  if(agentsTeller) agentsTeller.textContent = `${onlineCount}/${totaal} online`;
+  if(agentsDetailTeller) agentsDetailTeller.textContent = `${totaal} agents`;
+  if(footerAgents) footerAgents.textContent = `Agents: ${onlineCount}/${totaal} online`;
+  if(statMacbook) statMacbook.textContent = `${macbookOnline}/${macbookAgents.length}`;
+  if(statImac) statImac.textContent = `${imacOnline}/${imacAgents.length}`;
+}
+
+// ---- Filter functies ----
+function setFilter(filter, knop) {
+  huidigFilter = filter;
+  document.querySelectorAll('.filter-balk .filter-knop').forEach(k => {
+    if (k.textContent.includes('MACBOOK') || k.textContent.includes('iMAC') || k.textContent.includes('ALLE') && k.onclick && k.onclick.toString().includes('setMachineFilter')) return;
+    k.classList.remove('actief');
+  });
+  knop.classList.add('actief');
+  renderActiviteiten();
+}
+
+function setMachineFilter(machine, knop) {
+  huidigMachineFilter = machine;
+  // Verwijder actief van machine filter knoppen
+  const allKnoppen = document.querySelectorAll('.filter-balk .filter-knop');
+  allKnoppen.forEach(k => {
+    if (k.onclick && k.onclick.toString().includes('setMachineFilter')) {
+      k.classList.remove('actief');
+    }
+  });
+  knop.classList.add('actief');
+  renderActiviteiten();
+}
+
+function clearActiviteiten() {
+  alleActiviteiten = [];
+  renderActiviteiten();
+  renderActiviteitenOverzicht();
+}
+
+// ---- Status ophalen ----
+async function haalStatusOp() {
+  try {
+    const resp = await fetch('/api/status');
+    const data = await resp.json();
+
+    if (data.ok) {
+      renderAgents(data.agents || {});
+
+      // Redis status
+      const redisDot1 = document.getElementById('redis-dot');
+      const redisDot2 = document.getElementById('footer-redis-dot');
+      const redisTekst1 = document.getElementById('redis-status');
+      const redisTekst2 = document.getElementById('footer-redis');
+
+      if (data.redis) {
+        [redisDot1, redisDot2].forEach(d => { if(d) { d.style.background = 'var(--groen)'; d.style.boxShadow = '0 0 6px var(--groen)'; } });
+        if(redisTekst1) redisTekst1.textContent = 'Redis verbonden';
+        if(redisTekst2) redisTekst2.textContent = 'Redis: verbonden';
+      } else {
+        [redisDot1, redisDot2].forEach(d => { if(d) { d.style.background = 'var(--rood)'; d.style.boxShadow = '0 0 6px var(--rood)'; } });
+        if(redisTekst1) redisTekst1.textContent = 'Redis verbroken';
+        if(redisTekst2) redisTekst2.textContent = 'Redis: verbroken';
+      }
+    }
+  } catch(e) {
+    console.error('[Status] Fout:', e.message);
+  }
+}
+
+// ---- Redis data ophalen ----
+async function haalRedisDataOp() {
+  try {
+    const resp = await fetch('/api/redis');
+    const data = await resp.json();
+
+    if (data.ok) {
+      if (data.xrp) {
+        const prijs = typeof data.xrp === 'object' ? (data.xrp.prijs || data.xrp.price || data.xrp.eur || JSON.stringify(data.xrp)) : data.xrp;
+        const prijsGetal = parseFloat(prijs);
+        const prijsTekst = isNaN(prijsGetal) ? prijs : '€' + prijsGetal.toFixed(4);
+        const el1 = document.getElementById('stat-xrp');
+        const el2 = document.getElementById('xrp-groot');
+        if(el1) el1.textContent = prijsTekst;
+        if(el2) el2.textContent = prijsTekst;
+      }
+
+      if (data.gelato !== null && data.gelato !== undefined) {
+        const bedrag = typeof data.gelato === 'object' ? (data.gelato.totaal || data.gelato.omzet || 0) : data.gelato;
+        const el1 = document.getElementById('stat-gelato');
+        const el2 = document.getElementById('gelato-omzet');
+        if(el1) el1.textContent = '€' + parseFloat(bedrag || 0).toFixed(2);
+        if(el2) el2.textContent = '€ ' + parseFloat(bedrag || 0).toFixed(2);
+      }
+
+      if (data.brainstorm) renderBrainstorm(data.brainstorm);
+      if (data.missie) renderMissie(data.missie);
+      if (data.viral) renderViral(data.viral);
+
+      if (data.spark) {
+        const socialEl = document.getElementById('social-content');
+        if(socialEl) {
+          const tekst = typeof data.spark === 'string' ? data.spark : JSON.stringify(data.spark, null, 2);
+          socialEl.innerHTML = `<div class="viral-item">${escapeHtml(tekst).replace(/\n/g, '<br>')}</div>`;
+        }
+      }
+    }
+  } catch(e) {
+    console.error('[Redis Data] Fout:', e.message);
+  }
+}
+
+// ---- Gelato orders ophalen ----
+async function haalGelatoOp() {
+  try {
+    const resp = await fetch('/api/redis');
+    const data = await resp.json();
+    if (data.ok) {
+      const ordersEl = document.getElementById('gelato-orders');
+      if (ordersEl && data.gelato) {
+        const orders = typeof data.gelato === 'object' ? (data.gelato.orders || '—') : '—';
+        ordersEl.textContent = 'Orders: ' + orders;
+      }
+    }
+  } catch(e) {}
+}
+
+// ---- HTML escapen ----
+function escapeHtml(tekst) {
+  if (typeof tekst !== 'string') tekst = String(tekst);
+  return tekst
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ---- Initialisatie ----
+async function initialiseer() {
+  console.log('[Dashboard] Initialiseren...');
+
+  // Verbind SSE
+  verbindSSE();
+
+  // Haal initiële data op
+  await haalStatusOp();
+  await haalRedisDataOp();
+
+  // Periodieke updates
+  setInterval(haalStatusOp, 15000);      // Agents elke 15s
+  setInterval(haalRedisDataOp, 30000);   // Redis data elke 30s
+
+  console.log('[Dashboard] Klaar');
+}
+
+// Start bij laden
+document.addEventListener('DOMContentLoaded', initialiseer);
+</script>
+</body>
+</html>
