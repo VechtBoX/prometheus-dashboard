@@ -843,6 +843,7 @@
 let alleActiviteiten = [];
 let huidigFilter = 'alle';
 let huidigMachineFilter = 'alle';
+let huidigAgentFilter = 'alle';
 let sseVerbinding = null;
 let sseVerbonden = false;
 let herverbindPoging = 0;
@@ -1038,7 +1039,8 @@ function renderActiviteiten() {
   const gefilterd = alleActiviteiten.filter(a => {
     const typeOk = huidigFilter === 'alle' || a.type === huidigFilter;
     const machineOk = huidigMachineFilter === 'alle' || a.machine === huidigMachineFilter;
-    return typeOk && machineOk;
+    const agentOk = huidigAgentFilter === 'alle' || a.agent === huidigAgentFilter;
+    return typeOk && machineOk && agentOk;
   }).slice(0, 100);
 
   if (gefilterd.length === 0) {
@@ -1074,7 +1076,7 @@ function renderActiviteitRij(a) {
   return `<div class="activiteit">
     <div class="act-type-dot dot-${type}" style="background:${kleur};"></div>
     <div class="act-tijd">${tijd}</div>
-    <div class="act-agent" style="color:${kleur};">${emoji} ${a.agent}</div>
+    <div class="act-agent" style="color:${kleur};cursor:pointer;text-decoration:underline dotted;" onclick="naarActiviteiten('${a.agent}')" title="Filter op ${a.agent}">${emoji} ${a.agent}</div>
     <div class="act-bericht">${escapeHtml(a.bericht || '')}</div>
   </div>`;
 }
@@ -1118,13 +1120,13 @@ function renderAgents(agentStatus) {
     const secGeleden = status ? status.secGeleden : null;
     const tijdTekst = secGeleden !== null ? (secGeleden < 60 ? `${secGeleden}s` : `${Math.floor(secGeleden/60)}m`) : '—';
 
-    return `<div class="agent-kaart ${isOnline ? 'online' : 'offline'}">
+    return `<div class="agent-kaart ${isOnline ? 'online' : 'offline'}" onclick="naarActiviteiten('${naam}')" title="Bekijk activiteiten van ${naam}" style="cursor:pointer;">
       <div class="agent-indicator ${isOnline ? 'online' : 'offline'}"></div>
       <div class="agent-info">
         <div class="agent-naam">${info.emoji} ${naam}</div>
         <div class="agent-machine">${info.beschrijving}</div>
       </div>
-      <div class="agent-tijd">${tijdTekst}</div>
+      <div class="agent-tijd" style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">${tijdTekst}<span style="font-size:9px;color:#444;">⚡ logs</span></div>
     </div>`;
   }
 
@@ -1207,6 +1209,38 @@ function setMachineFilter(machine, knop) {
   });
   knop.classList.add('actief');
   renderActiviteiten();
+}
+
+// ---- Navigeer naar activiteiten tab gefilterd op agent ----
+function naarActiviteiten(agentNaam) {
+  // Zet agent filter
+  huidigAgentFilter = agentNaam;
+  huidigFilter = 'alle';
+  huidigMachineFilter = 'alle';
+
+  // Ga naar activiteiten tab
+  document.querySelectorAll('.tab-inhoud').forEach(t => t.classList.remove('actief'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('actief'));
+  document.getElementById('tab-activiteiten').classList.add('actief');
+  document.querySelectorAll('.nav-tab')[2].classList.add('actief');
+
+  // Update agent filter badge
+  let badge = document.getElementById('agent-filter-badge');
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.id = 'agent-filter-badge';
+    badge.style.cssText = 'background:#1a1a1a;border:1px solid #00ff88;border-radius:3px;padding:2px 8px;font-size:10px;color:#00ff88;cursor:pointer;letter-spacing:1px;';
+    badge.onclick = () => { huidigAgentFilter = 'alle'; badge.remove(); renderActiviteiten(); };
+    const filterBalk = document.querySelector('.filter-balk');
+    if (filterBalk) filterBalk.appendChild(badge);
+  }
+  const info = AGENTS[agentNaam] || {};
+  badge.textContent = `${info.emoji || ''} ${agentNaam} ✕`;
+  badge.title = 'Klik om agent filter te verwijderen';
+
+  renderActiviteiten();
+  // Scroll naar boven
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function clearActiviteiten() {
