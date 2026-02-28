@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prometheus Final Dashboard 🦅</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e); color: white; font-family: 'Courier New', monospace; }
+    .card { transition: all 0.5s ease; }
+    .card:hover { transform: scale(1.1) rotate(3deg); box-shadow: 0 0 60px #a78bfa; border-color: #e879f9; }
+    .tab-button { transition: all 0.3s; }
+    .tab-button.active { background: #a78bfa; box-shadow: 0 0 20px #a78bfa; }
+    .stat-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); }
+  </style>
+</head>
+<body class="min-h-screen p-8">
+  <h1 class="text-6xl font-extrabold text-center mb-12 bg-gradient-to-r from-cyan-400 to-purple-600 bg-clip-text text-transparent">
+    Prometheus Final Dashboard 🦅
+  </h1>
+
+  <!-- Tabs -->
+  <div class="flex justify-center mb-16 space-x-8">
+    <button id="tab-agents" class="tab-button active px-8 py-4 rounded-xl text-2xl font-bold bg-purple-600">Live Agents</button>
+    <button id="tab-revenue" class="tab-button px-8 py-4 rounded-xl text-2xl font-bold bg-purple-600">Revenue & Impact</button>
+    <button id="tab-xrp" class="tab-button px-8 py-4 rounded-xl text-2xl font-bold bg-purple-600">XRP Tracker</button>
+  </div>
+
+  <!-- Tab Content -->
+  <div id="content-agents" class="tab-content">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-12 max-w-8xl mx-auto">
+      <!-- Bots worden hier automatisch toegevoegd -->
+    </div>
+  </div>
+
+  <div id="content-revenue" class="tab-content hidden text-center">
+    <h2 class="text-5xl font-bold mb-12 text-yellow-400">Top Bots Revenue & Impact</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 max-w-6xl mx-auto">
+      <div class="card bg-gradient-to-b from-purple-900 to-black p-12 rounded-3xl shadow-2xl border-4 border-purple-600">
+        <h2 class="text-4xl font-bold mb-8 text-yellow-400">Mystery Mocktail</h2>
+        <p class="text-3xl mb-4">Platform: HorecaShift</p>
+        <p class="text-4xl text-yellow-300">Revenue: €<span id="rev-mocktail">2450</span></p>
+        <p class="text-2xl mt-8">Impact: 45</p>
+      </div>
+      <div class="card bg-gradient-to-b from-purple-900 to-black p-12 rounded-3xl shadow-2xl border-4 border-purple-600">
+        <h2 class="text-4xl font-bold mb-8 text-yellow-400">MikkieWorld</h2>
+        <p class="text-3xl mb-4">Platform: MikkieWorld</p>
+        <p class="text-4xl text-yellow-300">Revenue: €<span id="rev-mikkie">2100</span></p>
+        <p class="text-2xl mt-8">Impact: 52</p>
+      </div>
+      <div class="card bg-gradient-to-b from-purple-900 to-black p-12 rounded-3xl shadow-2xl border-4 border-purple-600">
+        <h2 class="text-4xl font-bold mb-8 text-yellow-400">Community Table</h2>
+        <p class="text-3xl mb-4">Platform: Connecting Sober</p>
+        <p class="text-4xl text-yellow-300">Revenue: €<span id="rev-community">1890</span></p>
+        <p class="text-2xl mt-8">Impact: 78</p>
+      </div>
+      <div class="card bg-gradient-to-b from-purple-900 to-black p-12 rounded-3xl shadow-2xl border-4 border-purple-600">
+        <h2 class="text-4xl font-bold mb-8 text-yellow-400">Adventure Club</h2>
+        <p class="text-3xl mb-4">Platform: MikkieWorld</p>
+        <p class="text-4xl text-yellow-300">Revenue: €<span id="rev-adventure">1750</span></p>
+        <p class="text-2xl mt-8">Impact: 125</p>
+      </div>
+      <div class="card bg-gradient-to-b from-purple-900 to-black p-12 rounded-3xl shadow-2xl border-4 border-purple-600">
+        <h2 class="text-4xl font-bold mb-8 text-yellow-400">HorecaShift Core</h2>
+        <p class="text-3xl mb-4">Platform: HorecaShift</p>
+        <p class="text-4xl text-yellow-300">Revenue: €<span id="rev-core">1650</span></p>
+        <p class="text-2xl mt-8">Impact: 38</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="content-xrp" class="tab-content hidden text-center">
+    <h2 class="text-5xl font-bold mb-12 text-yellow-400">XRP Goal Tracker</h2>
+    <div class="max-w-4xl mx-auto">
+      <div class="stat-card p-16 rounded-3xl border-4 border-cyan-500">
+        <p class="text-4xl mb-8">Current XRP Balance</p>
+        <p class="text-7xl font-bold text-cyan-400">1010 XRP</p>
+        <p class="text-3xl mt-8 opacity-80">≈ €1515,51</p>
+        <p class="text-2xl mt-12">Goal: 100,000 XRP (€150,000)</p>
+        <div class="w-full bg-gray-800 rounded-full h-12 mt-8">
+          <div class="bg-cyan-500 h-12 rounded-full" style="width: 1.01%"></div>
+        </div>
+        <p class="text-xl mt-4">1.01% complete</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Tab switching
+    document.getElementById('tab-agents').addEventListener('click', () => switchTab('agents'));
+    document.getElementById('tab-revenue').addEventListener('click', () => switchTab('revenue'));
+    document.getElementById('tab-xrp').addEventListener('click', () => switchTab('xrp'));
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+      document.getElementById(`content-${tab}`).classList.remove('hidden');
+      document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+      document.getElementById(`tab-${tab}`).classList.add('active');
+    }
+
+    // Revenue stijgt automatisch
+    setInterval(() => {
+      const revs = ['rev-mocktail', 'rev-mikkie', 'rev-community', 'rev-adventure', 'rev-core'];
+      let total = 0;
+      revs.forEach(id => {
+        const elem = document.getElementById(id);
+        const current = parseInt(elem.innerText.replace('€', ''));
+        const newRev = current + Math.floor(Math.random() * 50 + 10);
+        elem.innerText = newRev;
+        total += newRev;
+      });
+      document.getElementById('totalRevenue').innerText = `€${total}`;
+    }, 5000);
+  </script>
+</body>
+</html>
